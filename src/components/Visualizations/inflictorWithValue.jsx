@@ -123,7 +123,15 @@ display: inline-block;
   font-weight: ${constants.fontWeightMedium};
   text-shadow: 1px 1px 2px black, -1px -1px 2px black;
 }
-
+.chargeOverlay {
+  position: absolute;
+  top: -2px;
+  right: 0px;
+  font-size: 11px;
+  color: ${constants.textColorPrimary};
+  font-weight: ${constants.fontWeightMedium};
+  text-shadow: 1px 1px 2px black, -1px -1px 2px black;
+}
 .backpackOverlay {
   display: inline-block;
   font-size: 10px;
@@ -153,13 +161,13 @@ class InflictorWithValue extends React.Component {
     abilities: PropTypes.shape({}),
     neutralAbilities: PropTypes.shape({}),
     abilityIds: PropTypes.shape({}),
+    charges: PropTypes.number,
   }
 
   constructor(props) {
     super(props);
     this.state = { showTooltip: false };
   }
-
   setShowTooltip = () => {
     if (!this.state.showTooltip) {
       this.setState({ showTooltip: true });
@@ -168,7 +176,7 @@ class InflictorWithValue extends React.Component {
 
   render() {
     const {
-      inflictor, value, type, ptooltip, abilityId, strings, abilities, neutralAbilities, abilityIds,
+      inflictor, value, type, ptooltip, abilityId, strings, abilities, neutralAbilities, abilityIds, charges,
     } = this.props;
 
     const resolvedInflictor = (abilityId && abilityIds && abilityIds[abilityId]) || String(inflictor);
@@ -188,14 +196,14 @@ class InflictorWithValue extends React.Component {
         } else if (neutralAbility) {
           image = neutralAbility.img;
         } else {
-          image = `${process.env.REACT_APP_API_HOST}/apps/dota2/images/abilities/${resolvedInflictor}_sm.png`;
+          image = `${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/abilities/${resolvedInflictor}_sm.png`;
         }
         tooltip = <AbilityTooltip ability={ability} inflictor={resolvedInflictor} />;
       } else if (item) {
         if (customImageIcon.includes(resolvedInflictor)) {
           image = `/assets/images/dota2/${resolvedInflictor}.png`;
         } else {
-          image = `${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/${getInflictorImage(resolvedInflictor)}_lg.png`;
+          image = `${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/${getInflictorImage(resolvedInflictor)}_lg.png`;
         }
         tooltip = <ItemTooltip item={item} inflictor={resolvedInflictor} />;
       } else {
@@ -213,7 +221,7 @@ class InflictorWithValue extends React.Component {
             data-for={ttId}
             onMouseEnter={this.setShowTooltip}
           >
-            {(!type || type === 'backpack' || type === 'neutral') &&
+            {(!type || type === 'purchase' || type === 'backpack' || type === 'neutral') &&
             <object data={image} height="27px" type="image/png">
               <img src="/assets/images/Dota2Logo.svg" alt="" style={{ filter: 'grayscale(60%)', height: '27px' }} />
             </object>}
@@ -230,6 +238,11 @@ class InflictorWithValue extends React.Component {
             <div className="buffOverlay">
               {value > 0 && value}
             </div>
+          }
+            {charges &&
+              <div className="chargeOverlay">
+                {charges}
+              </div>
           }
             {type === 'backpack' &&
             <div className="backpackOverlay">
@@ -261,12 +274,13 @@ const mapStateToProps = state => ({
 
 const InflictorWithValueCont = connect(mapStateToProps)(InflictorWithValue);
 
-export default (inflictor, value, type, ptooltip, abilityId) => (
+export default (inflictor, value, type, ptooltip, abilityId, charges) => (
   <InflictorWithValueCont
     inflictor={inflictor}
     value={value}
     type={type}
     ptooltip={ptooltip}
     abilityId={abilityId}
+    charges={charges}
   />
 );

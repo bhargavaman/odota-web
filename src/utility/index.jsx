@@ -9,6 +9,7 @@ import inRange from 'lodash/fp/inRange';
 // import SvgIcon from 'material-ui/SvgIcon';
 import SocialPeople from 'material-ui/svg-icons/social/people';
 import SocialPerson from 'material-ui/svg-icons/social/person';
+import querystring from 'querystring';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import ReactTooltip from 'react-tooltip';
@@ -32,7 +33,7 @@ const year = month * 12;
 // temporary host a hero image ourselves:
 // put the hero ID inside this array
 // and upload a {HERO_ID}.png and {HERO_ID}_icon.png image to \assets\images\dota2\heroes
-export const customHeroImage = [];
+export const customHeroImage = [135];
 
 export const iconStyle = {
   position: 'relative',
@@ -188,7 +189,7 @@ export const getHeroImageUrl = (heroId, imageSizeSuffix) => {
   if (customHeroImage.includes(Number(heroId))) {
     return `/assets/images/dota2/heroes/${heroId}.png`;
   }
-  let imageUrl = heroes[heroId] && process.env.REACT_APP_API_HOST + heroes[heroId].img; // "[api url]/abaddon_full.png?"
+  let imageUrl = heroes[heroId] && process.env.REACT_APP_IMAGE_CDN + heroes[heroId].img; // "[api url]/abaddon_full.png?"
   if (imageUrl) {
     imageUrl = imageUrl.slice(0, -('full.png?'.length)); // "[api url]/abaddon"
   }
@@ -198,7 +199,7 @@ export const getHeroImageUrl = (heroId, imageSizeSuffix) => {
 export const getHeroIconUrlFromHeroKey = (heroKey) => {
   const heroId = Object.keys(heroes).find(k => heroes[k].name === heroKey);
   if (heroId && heroId[0] && heroes[heroId[0]]) {
-    return `${process.env.REACT_APP_API_HOST}${heroes[heroId].icon}`;
+    return `${process.env.REACT_APP_IMAGE_CDN}${heroes[heroId].icon}`;
   }
 
   return '/assets/images/blank-1x1.gif';
@@ -607,10 +608,10 @@ export function fromNow(time) {
   return '';
 }
 
-export function displayHeroId(row, col, field, showGuide = false, imageSizeSuffix = IMAGESIZE_ENUM.SMALL.suffix, guideUrl, guideType) {
+export function displayHeroId(row, col, field, showGuide = false, guideUrl, guideType) {
   const { strings } = store.getState().app;
+  const heroId = row[col.field];
   const heroName = heroes[row[col.field]] ? heroes[row[col.field]].localized_name : strings.general_no_hero;
-  const imageUrl = getHeroImageUrl(row[col.field], imageSizeSuffix);
   const getSubtitle = (row) => {
     if (row.match_id && row.player_slot !== undefined) {
       let lane;
@@ -653,8 +654,7 @@ export function displayHeroId(row, col, field, showGuide = false, imageSizeSuffi
   return (
     <TableHeroImage
       parsed={row.version}
-      image={imageUrl}
-      heroID={row.hero_id}
+      heroID={heroId}
       title={getTitle(row, col, heroName)}
       subtitle={getSubtitle(row)}
       heroName={heroName}
@@ -668,7 +668,7 @@ export function displayHeroId(row, col, field, showGuide = false, imageSizeSuffi
 }
 
 export function displayHeroIdWithPvgna(row, col, field) {
-  return displayHeroId(row, col, field, true, IMAGESIZE_ENUM.SMALL.suffix, row.pvgnaGuide && row.pvgnaGuide.url, 'PVGNA');
+  return displayHeroId(row, col, field, true, row.pvgnaGuide && row.pvgnaGuide.url, 'PVGNA');
 }
 
 export function displayHeroIdWithMoreMmr(row, col, field) {
@@ -678,7 +678,7 @@ export function displayHeroIdWithMoreMmr(row, col, field) {
     url = `https://moremmr.com/en/heroes/${heroName}/videos?utm_source=opendota&utm_medium=heroes&utm_campaign=${heroName}`;
   }
 
-  return displayHeroId(row, col, field, true, IMAGESIZE_ENUM.SMALL.suffix, url, 'MOREMMR');
+  return displayHeroId(row, col, field, true, url, 'MOREMMR');
 }
 
 /**
@@ -851,7 +851,7 @@ const transformMatchItem = ({
   if (field === 0) {
     return false;
   }
-  return `${process.env.REACT_APP_API_HOST}${items[itemIds[field]].img}`;
+  return `${process.env.REACT_APP_IMAGE_CDN}${items[itemIds[field]].img}`;
 };
 
 for (let i = 0; i < 6; i += 1) {
@@ -926,4 +926,24 @@ export function formatGraphValueData(data, histogramName) {
     default:
       return data;
   }
+}
+
+export function escapeRegExp(stringToGoIntoTheRegex) {
+  return stringToGoIntoTheRegex.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'); // eslint-disable-line no-useless-escape
+}
+
+/**
+ * Takes a string of URL query params, converts it into an object, and adds the turbo filter params if localstorage setting is set
+ * @param params A string of URL query params
+ */
+export function paramsWithTurbo(params) {
+  const isTurboMode = window.localStorage.getItem('modeFilter') === 'turbo';
+  let objParams = params ?? {};
+  if (typeof params === 'string' && params) {
+    objParams = querystring.parse(params.slice(1));
+  }
+  if (!isTurboMode) {
+    return objParams;
+  }
+  return {...objParams, significant: 0, game_mode: 23};
 }

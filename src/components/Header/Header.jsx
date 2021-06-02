@@ -76,7 +76,7 @@ const ToolbarHeader = styled(Toolbar)`
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 100;
+  z-index: 200;
 
   & a {
     color: ${constants.primaryTextColor};
@@ -256,7 +256,6 @@ const Header = ({ location, disableSearch }) => {
       key: 'header_combos',
       to: '/combos',
       label: strings.combos,
-      feature: '2020 BP',
     },
     {
       key: 'header_api',

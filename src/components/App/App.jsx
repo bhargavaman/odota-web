@@ -189,7 +189,7 @@ const App = (props) => {
           </Switch>
         </StyledBodyDiv>
         <AdBannerDiv>
-          {includeAds && (
+          {includeAds && process.env.REACT_APP_ENABLE_RIVALRY && (
             <div style={{ fontSize: '12px' }}>
               <a href="https://www.rivalry.com/opendota">
                 <img src="/assets/images/rivalry-banner.gif" alt="" />
@@ -200,6 +200,23 @@ const App = (props) => {
               </div>
             </div>
           )}
+          {
+            includeAds && process.env.REACT_APP_ENABLE_BOTTOM_BANNER &&
+            <>
+              <script data-ad-client="ca-pub-5591574346816667" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"/>
+              <ins
+                className="adsbygoogle"
+                style={{display: "block"}}
+                data-ad-client="ca-pub-5591574346816667"
+                data-ad-slot="5235463836"
+                data-ad-format="auto"
+                data-full-width-responsive="true"
+              />
+              <script>
+                  (adsbygoogle = window.adsbygoogle || []).push({});
+              </script>
+            </>
+          }
         </AdBannerDiv>
         <Footer />
         <button

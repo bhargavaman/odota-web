@@ -1,10 +1,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { Box } from '@material-ui/core';
 import FlatButton from 'material-ui/FlatButton';
 import ActionUpdate from 'material-ui/svg-icons/navigation/refresh';
 import styled from 'styled-components';
 import { toggleShowForm as toggleShowFormAction } from '../../../actions/formActions';
+import GamemodeToggle from '../../../components/GamemodeToggle';
 
 const Styled = styled.div`
   display: flex;
@@ -24,8 +26,6 @@ const Styled = styled.div`
     }
 
     & * {
-      font-size: 0 !important;
-      padding: 0 !important;
       margin: auto !important;
     }
 
@@ -60,6 +60,9 @@ class PlayerButtons extends React.Component {
             label={strings.app_refresh_label}
           />
         </div>
+        <Box ml="16px">
+          <GamemodeToggle />
+        </Box>
       </Styled>
     );
   }

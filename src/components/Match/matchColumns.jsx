@@ -25,13 +25,19 @@ import { TableHeroImage, inflictorWithValue } from '../Visualizations';
 import { CompetitiveRank } from '../Visualizations/Table/HeroImage';
 import { IconBackpack, IconRadiant, IconDire } from '../Icons';
 import constants from '../constants';
-import { StyledAbilityUpgrades, StyledBackpack, StyledCosmetic, StyledDivClearBoth, StyledGoldIcon, StyledPlayersDeath, StyledRunes, StyledUnusedItem } from './StyledMatch';
+import { StyledAbilityUpgrades, StyledBackpack, StyledCosmetic, StyledDivClearBoth, StyledPlayersDeath, StyledRunes, StyledUnusedItem, StyledAghanimsBuffs, StyledLevel } from './StyledMatch';
 import TargetsBreakdown from './TargetsBreakdown';
 import HeroImage from './../Visualizations/HeroImage';
+import ItemTooltip from '../ItemTooltip';
 
 const heroNames = getHeroesById();
 
 const parsedBenchmarkCols = ['lhten', 'stuns_per_min'];
+
+const shardTooltip = <ItemTooltip item={items.aghanims_shard}/>;
+const scepterTooltip = <ItemTooltip item={items.ultimate_scepter}/>
+const AGHANIMS_SHARD = 12;
+const AGHANIMS_SCEPTER = 2;
 
 export default (strings) => {
   const heroTd = (row, col, field, index, hideName, party, showGuide = false, guideType) => {
@@ -164,7 +170,7 @@ export default (strings) => {
         field: 'player_slot',
         displayFn: (row, col, field, i) => heroTd(row, col, field, i, false, partyStyles(row, match), false, null),
         sortFn: true,
-        width: 236,
+        width: 170,
       },
       {
         displayName: strings.th_level,
@@ -173,10 +179,22 @@ export default (strings) => {
         sortFn: true,
         maxFn: true,
         sumFn: true,
-        textAlign: 'right',
-
-        paddingRight: 14,
-        width: 21,
+        textAlign: 'center',
+        paddingRight: 7,
+        width: 41,
+        displayFn: (row, col, field) => (
+          <StyledLevel>
+            <span>{field}</span>
+            <svg viewBox="0 0 36 36" className="circular_chart">
+              <path
+                className="circle"
+                strokeDasharray={`${(field / constants.dotaMaxLevel)*100}, 100`}
+                d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+              />
+            </svg>
+          </StyledLevel>)
       },
       {
         displayName: strings.th_kills,
@@ -187,7 +205,7 @@ export default (strings) => {
         sumFn: true,
         color: 'hsla(123, 25%, 57%, 1)',
         textAlign: 'right',
-        paddingLeft: 14,
+        paddingLeft: 10,
         paddingRight: 5,
         width: 21,
         underline: 'max',
@@ -254,8 +272,20 @@ export default (strings) => {
         sumFn: true,
         // relativeBars: true,
         paddingLeft: 0,
-        paddingRight: 10,
+        paddingRight: 8,
         width: 21,
+        underline: 'max',
+      },
+      {
+        displayName: strings.th_net_worth,
+        tooltip: strings.tooltip_net_worth,
+        field: 'net_worth',
+        sortFn: true,
+        color: constants.golden,
+        sumFn: true,
+        displayFn: row => abbreviateNumber(row.net_worth),
+        textAlign: 'right',
+        width: 32,
         underline: 'max',
       },
       {
@@ -337,25 +367,6 @@ export default (strings) => {
         underline: 'max',
       },
       {
-        displayName: (
-          <StyledGoldIcon>
-            {strings.th_gold}
-            <img src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/tooltips/gold.png`} alt="" />
-          </StyledGoldIcon>
-        ),
-        tooltip: strings.tooltip_gold,
-        field: 'total_gold',
-        sortFn: true,
-        color: constants.golden,
-        sumFn: true,
-        displayFn: row => abbreviateNumber(row.total_gold),
-        // relativeBars: true,
-        textAlign: 'right',
-        paddingLeft: 14,
-        width: 32,
-        underline: 'max',
-      },
-      {
         displayName: strings.th_items,
         tooltip: strings.tooltip_items,
         field: 'items',
@@ -374,14 +385,43 @@ export default (strings) => {
           </div>,
       }
       : [])
+      .concat(
+        {
+          paddingLeft: 5,
+          paddingRight: 0,
+          width: 32,
+          displayFn: row => 
+            <StyledAghanimsBuffs>
+              <ReactTooltip id="scepter" effect="solid" place="left">
+                {scepterTooltip}
+              </ReactTooltip>
+              <ReactTooltip id="shard" effect="solid" place="left">
+                {shardTooltip}
+              </ReactTooltip>
+              <img
+                src={`/assets/images/dota2/scepter_${row.permanent_buffs && row.permanent_buffs.some(b => b.permanent_buff === AGHANIMS_SCEPTER) ? '1' : '0'}.png`}
+                alt=""
+                data-tip={scepterTooltip}
+                data-for="scepter"
+              />
+              <img
+                src={`/assets/images/dota2/shard_${row.permanent_buffs && row.permanent_buffs.some(b => b.permanent_buff === AGHANIMS_SHARD) ? '1' : '0'}.png`}
+                alt=""
+                data-tip={shardTooltip}
+                data-for="shard"
+              />        
+            </StyledAghanimsBuffs>
+        },
+      )
       .concat(match.players.map(player => player.permanent_buffs && player.permanent_buffs.length).reduce(sum, 0) > 0
         ? {
           displayName: strings.th_permanent_buffs,
           tooltip: strings.tooltip_permanent_buffs,
           field: 'permanent_buffs',
-          width: 135,
+          width: 60,
           displayFn: row =>
-            (row.permanent_buffs && row.permanent_buffs.length > 0 ? row.permanent_buffs.map(buff => inflictorWithValue(buffs[buff.permanent_buff], buff.stack_count, 'buff')) : '-'),
+            (row.permanent_buffs && row.permanent_buffs.length > 0 ? row.permanent_buffs
+            .filter(b => b.permanent_buff !== AGHANIMS_SCEPTER && b.permanent_buff !== AGHANIMS_SHARD).map(buff => inflictorWithValue(buffs[buff.permanent_buff], buff.stack_count, 'buff')) : '-'),
         }
         : []);
 
@@ -657,7 +697,7 @@ export default (strings) => {
                 })
                 .map((purchase) => {
                   if (items[purchase.key] && (showConsumables || items[purchase.key].qual !== 'consumable')) {
-                    return inflictorWithValue(purchase.key, formatSeconds(purchase.time));
+                    return inflictorWithValue(purchase.key, formatSeconds(purchase.time), null, null, null, purchase.charges);
                   }
                   return null;
                 })
@@ -1024,7 +1064,7 @@ export default (strings) => {
         <StyledCosmetic key={cosmetic.item_id} data-tip data-for={`cosmetic_${cosmetic.item_id}`}>
           <a href={`http://steamcommunity.com/market/listings/570/${cosmetic.name}`} target="_blank" rel="noopener noreferrer">
             <img
-              src={`${process.env.REACT_APP_API_HOST}/apps/570/${cosmetic.image_path}`}
+              src={`${process.env.REACT_APP_IMAGE_CDN}/apps/570/${cosmetic.image_path}`}
               alt=""
               style={{
                 borderBottom: `2px solid ${cosmetic.item_rarity ? cosmeticsRarity[cosmetic.item_rarity] : constants.colorMuted}`,
@@ -1262,7 +1302,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
         &nbsp;{strings.th_duration_shorthand}
       </div>
     ),
@@ -1277,7 +1317,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
         &nbsp;{strings.th_duration_shorthand}
       </div>
     ),
@@ -1292,7 +1332,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
         &nbsp;{strings.th_purchase_shorthand}
       </div>
     ),
@@ -1307,7 +1347,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
         &nbsp;{strings.th_purchase_shorthand}
       </div>
     ),
@@ -1322,7 +1362,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/dust_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/dust_lg.png`} alt="" />
         &nbsp;{strings.th_purchase_shorthand}
       </div>
     ),
@@ -1337,7 +1377,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/smoke_of_deceit_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/smoke_of_deceit_lg.png`} alt="" />
         &nbsp;{strings.th_purchase_shorthand}
       </div>
     ),
@@ -1352,7 +1392,7 @@ export default (strings) => {
     center: true,
     displayName: (
       <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-        <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/gem_lg.png`} alt="" />
+        <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/gem_lg.png`} alt="" />
         &nbsp;{strings.th_purchase_shorthand}
       </div>
     ),
@@ -1370,7 +1410,7 @@ export default (strings) => {
       center: true,
       displayName: (
         <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-          <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
+          <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_observer_lg.png`} alt="" />
           &nbsp;{visionStrings.th_use_shorthand}
         </div>
       ),
@@ -1386,7 +1426,7 @@ export default (strings) => {
       center: true,
       displayName: (
         <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-          <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
+          <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/ward_sentry_lg.png`} alt="" />
           &nbsp;{visionStrings.th_use_shorthand}
         </div>
       ),
@@ -1402,7 +1442,7 @@ export default (strings) => {
       center: true,
       displayName: (
         <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-          <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/dust_lg.png`} alt="" />
+          <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/dust_lg.png`} alt="" />
           &nbsp;{visionStrings.th_use_shorthand}
         </div>
       ),
@@ -1417,7 +1457,7 @@ export default (strings) => {
       center: true,
       displayName: (
         <div style={{ display: 'inline-flex', verticalAlign: 'middle' }}>
-          <img height="15" src={`${process.env.REACT_APP_API_HOST}/apps/dota2/images/items/smoke_of_deceit_lg.png`} alt="" />
+          <img height="15" src={`${process.env.REACT_APP_IMAGE_CDN}/apps/dota2/images/items/smoke_of_deceit_lg.png`} alt="" />
           &nbsp;{visionStrings.th_use_shorthand}
         </div>
       ),

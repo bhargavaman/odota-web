@@ -55,6 +55,38 @@ export const StyledAbilityUpgrades = styled.div`
   }
 `;
 
+export const StyledAghanimsBuffs = styled.div`
+  min-height: 44px;
+
+  > img {
+    width: 24px;
+  }
+
+  .__react_component_tooltip {
+    opacity: 1 !important;
+    padding: 0px !important;
+  }
+`
+
+export const StyledLevel = styled.div`
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+
+  .circular_chart {
+    position: absolute;
+    fill: none;
+    width: 70%;
+  }
+
+  .circle {
+    stroke: #a9a9a94d;
+    stroke-width: 2.8;
+    stroke-linecap: round;
+  }
+`
+
 export const StyledCosmetic = styled.div`
   display: inline-block;
   margin: 5px;
